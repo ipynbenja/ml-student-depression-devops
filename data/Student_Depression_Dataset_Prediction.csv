@@ -1,0 +1,11 @@
+id,Gender,Age,City,Academic Pressure,CGPA,Study Satisfaction,Sleep Duration,Dietary Habits,Degree,Have you ever had suicidal thoughts ?,Work/Study Hours,Financial Stress,Family History of Mental Illness,Depression
+1001,Male,22.0,Bangalore,3.0,7.45,4.0,5-6 hours,Moderate,BSc,No,5.0,2.0,No,0
+1002,Female,24.0,Mumbai,5.0,6.12,2.0,Less than 5 hours,Unhealthy,M.Tech,Yes,10.0,5.0,Yes,1
+1003,Male,29.0,Chennai,2.0,8.91,5.0,7-8 hours,Healthy,BE,No,3.0,1.0,No,0
+1004,Female,21.0,Ahmedabad,4.0,7.03,3.0,5-6 hours,Moderate,B.Ed,Yes,8.0,4.0,Yes,1
+1005,Male,31.0,Kolkata,1.0,9.12,5.0,More than 8 hours,Healthy,PhD,No,2.0,1.0,No,0
+1006,Female,20.0,Pune,5.0,5.85,2.0,Less than 5 hours,Unhealthy,Class 12,Yes,11.0,5.0,Yes,1
+1007,Male,27.0,Nashik,3.0,8.26,4.0,7-8 hours,Moderate,LLB,No,4.0,2.0,No,0
+1008,Female,23.0,Jaipur,4.0,6.48,3.0,5-6 hours,Healthy,MSc,Yes,9.0,4.0,Yes,1
+1009,Male,25.0,Srinagar,2.0,8.74,4.0,More than 8 hours,Moderate,BHM,No,3.0,1.0,No,0
+1010,Female,28.0,Nagpur,5.0,5.67,1.0,Less than 5 hours,Unhealthy,M.Pharm,Yes,12.0,5.0,Yes,1

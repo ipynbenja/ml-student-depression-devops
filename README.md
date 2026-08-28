@@ -1,6 +1,46 @@
-# Project-data-science-3-Docker
+# proyecto-ml-student-depression-devops
 
-# 🧠 Student Depression Prediction API
+# Microservicio: Predicción de Depresión Estudiantil (MLOps / DevOps Pipeline)
+
+> **Asignatura:** Ingeniería DevOps (DOY0101)  
+
+> **Institución:** Duoc UC  
+
+> **Integrantes:** Abel Aravena, Benjamín Aravena, Benjamín Tapia
+
+## Descripción del microservicio
+
+Este microservicio corresponde a un modelo de Machine Learning desarrollado en una aisgnatura anterior, orientado a la detección de indicadores de depresión en estudiantes de educación superior. En esta primera fase del ciclo DevOps, se ha configurado la infraestructura base de control de versiones, flujos de trabajo colaborativos y un pipeline automatizado mediante GitHub Actions.
+
+---
+
+## Estrategia de ramificación 
+
+Para este microservicio hemos elegido **Trunk-Based Development (TBD)** debido a las siguientes razones clave en un proyecto de Machine Learning:
+
+- En modelos de Machine Learning y APIs, integrar cambios pequeños constantemente permite validar que el modelo, las dependencias y la API sigan funcionando sin romper el sistema.
+- Optamos por el uso de ramas de corta duración, y así integramos cambios de forma fluida hacia la rama principal (main) sin sufrir colisiones de código masivas.
+- TBD en futuras versiones también complementará directamente el flujo de Integración Continua (CI), ejecutando pruebas automáticas en cada **Pull Request** antes de fusionar.
+
+---
+
+### Commits convencionales 
+
+Adoptamos el estándar **Conventional Commits** para garantizar la trazabilidad del código: 
+
+-`feat:` Nuevas funcionalidades o endpoints (ej. `feat: agregar endpoint de predicción`). 
+
+-`fix:` Corrección de errores o bugs (ej. `fix: corregir tipo de dato en entrada del modelo`). 
+
+-`hotfix:` Corrección **urgente** de errores o bugs (ej. `hotfix: solución de login para usuarios`)
+
+-`docs:` Cambios exclusivamente en documentación (ej. `docs: actualizar guía de instalación`). 
+
+-`ci:` Cambios en la configuración de GitHub Actions (ej. `ci: agregar paso de pytest`). 
+
+-`refactor:` Refactorización de código sin alterar la funcionalidad previa.
+
+# Student Depression Prediction API
 
 API REST desarrollada con **FastAPI** y **Scikit-Learn** para predecir posibles casos de depresión estudiantil utilizando un modelo de Machine Learning entrenado previamente.
 
@@ -8,7 +48,7 @@ La aplicación se encuentra completamente dockerizada para facilitar su desplieg
 
 ---
 
-## 📌 Descripción
+## Funcionalidades
 
 La API permite:
 
@@ -21,7 +61,7 @@ La API permite:
 
 ---
 
-## 🧠 Tecnologías utilizadas
+## Tecnologías utilizadas
 
 * Python 3.12
 * FastAPI
@@ -35,10 +75,10 @@ La API permite:
 
 ---
 
-## 📂 Estructura del proyecto
+## Estructura del proyecto
 
 ```text
-Project-data-science-3-Docker
+ml-student-depression-devops
 │
 ├── api/
 │   └── main.py
@@ -64,7 +104,7 @@ Project-data-science-3-Docker
 
 ---
 
-## 🚀 Construcción de la imagen Docker
+## Construcción de la imagen Docker
 
 ```bash
 docker build -t student-depression-api .
@@ -72,7 +112,7 @@ docker build -t student-depression-api .
 
 ---
 
-## ▶️ Ejecución del contenedor
+## Ejecución del contenedor
 
 ```bash
 docker run -p 8000:8000 student-depression-api
@@ -86,7 +126,7 @@ http://localhost:8000
 
 ---
 
-## 📖 Documentación Swagger
+## Documentación Swagger
 
 FastAPI genera automáticamente documentación interactiva.
 
@@ -191,7 +231,7 @@ Probability_Depression
 
 ---
 
-## 🧪 Prueba rápida con Postman
+## Prueba rápida con Postman
 
 ### URL
 
@@ -226,7 +266,7 @@ Content-Type: application/json
 
 ---
 
-## 📦 Dependencias principales
+## Dependencias principales
 
 ```text
 pandas==3.0.3
@@ -245,7 +285,7 @@ openpyxl==3.1.5
 
 ---
 
-## ⚠️ Consideraciones
+## Consideraciones
 
 * El modelo Random Forest y el preprocesador se cargan una única vez al iniciar la API.
 * Las predicciones utilizan exactamente el mismo pipeline empleado durante el entrenamiento.
@@ -255,7 +295,7 @@ openpyxl==3.1.5
 
 ---
 
-## 🏗️ Arquitectura de inferencia
+## Arquitectura de inferencia
 
 ```text
 Request

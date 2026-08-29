@@ -1,0 +1,31 @@
+name: Student Depression CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Descargar codigo fuente
+      uses: actions/checkout@v4
+    - name: Configurar Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: "pip"
+    - name: Instalacion de dependencias
+      run: |
+        python -m pip install --upgrade pip
+                  pip install -r requirements.txt
+    - name: Imprimir mensaje de verificacion
+      run: |
+        echo "=================================================="
+        echo "Pipeline de CI v1.0 ejecutado exitosamente"
+        echo "Validando integracion en la rama: ${{ github.ref }}"
+        echo "Entorno y dependencias instaladas correctamente."
+        echo "=================================================="

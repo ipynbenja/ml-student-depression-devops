@@ -1,12 +1,19 @@
+# Machine Learning y Datos
 pandas==3.0.3
 numpy==2.4.5
 joblib==1.5.3
 scikit-learn==1.9.0
 category_encoders==2.8.1
 
+# API y Servidor
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
 pydantic==2.11.7
 
+# Utilidades y Archivos
 python-multipart==0.0.20
 openpyxl==3.1.5
+
+# Testing (Compatibles y actualizados)
+pytest>=8.3.4
+httpx>=0.28.1

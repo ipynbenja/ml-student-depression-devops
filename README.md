@@ -71,6 +71,7 @@ La API permite:
 * Scikit-Learn
 * Category Encoders
 * Joblib
+* Pytest
 * Docker
 
 ---
@@ -79,6 +80,9 @@ La API permite:
 
 ```text
 ml-student-depression-devops
+│
+├── .github/workflows/
+│   └── ci-pipeline.yaml
 │
 ├── api/
 │   └── main.py
@@ -97,8 +101,12 @@ ml-student-depression-devops
 ├── data/
 │   └── Student_Depression_Dataset_Prediction.csv
 │
+├── tests/
+│   └── main_test.py
+│
 ├── requirements.txt
 ├── Dockerfile
+├── CHANGELOG.md
 └── README.md
 ```
 
@@ -281,6 +289,9 @@ pydantic==2.11.7
 
 python-multipart==0.0.20
 openpyxl==3.1.5
+
+pytest>=8.3.4
+httpx>=0.28.1
 ```
 
 ---

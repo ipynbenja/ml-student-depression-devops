@@ -23,3 +23,8 @@ Todas las modificaciones notables de este proyecto serán documentadas en este a
 
 ### Corregido
 - Error en una fecha de este documento.
+
+- 2026-09-01
+Añadido
+Se añadió una interfaz web con streamlit (streamlit_app.py) para probar la API sin depender de Swagger o Postman, con un formulario para predicción individual y carga de archivos CSV/XLSX para predicción masiva.
+Se agregaron streamlit y requests a requirements.txt como dependencias de la interfaz web.

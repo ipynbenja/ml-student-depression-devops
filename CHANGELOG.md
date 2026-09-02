@@ -24,7 +24,25 @@ Todas las modificaciones notables de este proyecto serán documentadas en este a
 ### Corregido
 - Error en una fecha de este documento.
 
-- 2026-09-01
-Añadido
-Se añadió una interfaz web con streamlit (streamlit_app.py) para probar la API sin depender de Swagger o Postman, con un formulario para predicción individual y carga de archivos CSV/XLSX para predicción masiva.
-Se agregaron streamlit y requests a requirements.txt como dependencias de la interfaz web.
+## - 2026-09-01
+
+### Añadido
+- Se añadió una interfaz web con streamlit (streamlit_app.py) para probar la API sin depender de Swagger o Postman, con un formulario para predicción individual y carga de archivos CSV/XLSX para predicción masiva.
+
+- Se agregaron streamlit y requests a requirements.txt como dependencias de la interfaz web.
+
+- Se añadió la dependencia shap==0.48.0 al archivo requirements.txt para permitir la interpretación de predicciones individuales del modelo Random Forest.
+
+- Se añadió el endpoint POST /importancia-caso, destinado a obtener la importancia individual de las variables para un caso específico mediante SHAP.
+
+- Se añadió una función para obtener explicaciones individuales de las predicciones utilizando shap.TreeExplainer.
+
+## Cambiado
+- Se actualizó la obtención de la importancia de las variables para considerar correctamente la estructura del modelo almacenado como un Pipeline, accediendo al modelo Random Forest mediante MODEL.named_steps["model"].
+
+- Se actualizó el proceso de interpretación de variables para utilizar los nombres generados por el preprocesador mediante PREPROCESSOR.get_feature_names_out().
+
+- Se amplió la respuesta de las predicciones individuales para incluir la probabilidad de depresión y la dirección del impacto de las variables identificadas mediante SHAP.
+
+## Corregido
+- Se corrigió el acceso a las características de importancia del Random Forest, debido a que el archivo random_forest_model.pkl contiene un Pipeline con el modelo almacenado en el paso model.

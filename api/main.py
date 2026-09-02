@@ -2,12 +2,18 @@ from fastapi import FastAPI
 from fastapi import UploadFile
 from fastapi import File
 from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException
 
 import pandas as pd
 import tempfile
 import os
 
-from src.model_utils import predecir_estudiante, predecir_dataframe
+from src.model_utils import (
+    predecir_estudiante, 
+    predecir_dataframe,
+    obtener_importancia_variables,
+    obtener_importancia_caso
+)
 
 from Request.StudentRequest import StudentRequest
 
@@ -40,6 +46,27 @@ def predict(student: StudentRequest):
 
     return predecir_estudiante(student)
 
+
+@app.post("/case-importance")
+def importancia_caso(student: StudentRequest):
+    """
+    Obtiene las variables que más influyeron en la
+    predicción de un estudiante específico.
+    """
+
+    try:
+        resultado = obtener_importancia_caso(student)
+
+        return resultado
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Error al obtener la importancia "
+                f"del caso: {str(e)}"
+            )
+        )
 
 @app.post("/predict-file")
 async def predict_file(

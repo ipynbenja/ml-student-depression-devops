@@ -1,8 +1,10 @@
+from fastapi import HTTPException
 import os
 from pathlib import Path
 
 import joblib
 import pandas as pd
+import shap
 
 from Request.StudentRequest import StudentRequest
 
@@ -245,3 +247,96 @@ def guardar_resultados(
     )
 
     return str(output_path)
+
+def obtener_importancia_caso(
+    student: StudentRequest
+) -> dict:
+    """
+    Obtiene la importancia individual de las variables para
+    una predicción específica utilizando SHAP.
+
+    Parameters
+    ----------
+    student : StudentRequest
+        Datos del estudiante utilizado para realizar
+        la predicción.
+
+    Returns
+    -------
+    dict
+        Predicción, probabilidad y variables que más
+        contribuyeron a la predicción.
+    """
+
+    # Crear DataFrame con los datos originales.
+    df = crear_dataframe_prediccion(student)
+
+    # Aplicar el mismo preprocesamiento utilizado durante
+    # el entrenamiento.
+    X = transformar_dataset(df)
+
+    # Obtener el Random Forest desde el Pipeline.
+    random_forest = MODEL.named_steps["model"]
+
+    # Crear explicador SHAP para Random Forest.
+    explainer = shap.TreeExplainer(random_forest)
+
+    # Calcular valores SHAP.
+    shap_values = explainer.shap_values(X)
+
+    # Obtener la predicción.
+    prediction = int(
+        MODEL.predict(X)[0]
+    )
+
+    # Obtener probabilidad de depresión.
+    probability = float(
+        MODEL.predict_proba(X)[0][1]
+    )
+
+    # Obtener los valores SHAP correspondientes
+    # a la clase positiva (depresión).
+    if isinstance(shap_values, list):
+        valores_shap = shap_values[1][0]
+    else:
+        valores_shap = shap_values[0, :, 1]
+
+    nombres_variables = (
+        PREPROCESSOR.get_feature_names_out()
+    )
+
+    # Crear resultado.
+    variables = [
+        {
+            "variable": nombre,
+            "valor": float(valor),
+            "impacto_absoluto": round(
+                abs(float(valor)),
+                6
+            ),
+            "direccion": (
+                "aumenta la probabilidad de depresión"
+                if valor > 0
+                else "disminuye la probabilidad de depresión"
+            )
+        }
+        for nombre, valor in zip(
+            nombres_variables,
+            valores_shap
+        )
+    ]
+
+    # Ordenar por magnitud del impacto.
+    variables.sort(
+        key=lambda x: x["impacto_absoluto"],
+        reverse=True
+    )
+
+    return {
+        "prediction": prediction,
+        "probability_depression": round(
+            probability,
+            4
+        ),
+        "variables_importantes": variables
+    }

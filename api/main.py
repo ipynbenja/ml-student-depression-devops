@@ -11,7 +11,6 @@ import os
 from src.model_utils import (
     predecir_estudiante, 
     predecir_dataframe,
-    obtener_importancia_variables,
     obtener_importancia_caso
 )
 

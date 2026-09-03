@@ -37,12 +37,30 @@ Todas las modificaciones notables de este proyecto serán documentadas en este a
 
 - Se añadió una función para obtener explicaciones individuales de las predicciones utilizando shap.TreeExplainer.
 
-## Cambiado
+### Cambiado
 - Se actualizó la obtención de la importancia de las variables para considerar correctamente la estructura del modelo almacenado como un Pipeline, accediendo al modelo Random Forest mediante MODEL.named_steps["model"].
 
 - Se actualizó el proceso de interpretación de variables para utilizar los nombres generados por el preprocesador mediante PREPROCESSOR.get_feature_names_out().
 
 - Se amplió la respuesta de las predicciones individuales para incluir la probabilidad de depresión y la dirección del impacto de las variables identificadas mediante SHAP.
 
-## Corregido
+### Corregido
 - Se corrigió el acceso a las características de importancia del Random Forest, debido a que el archivo random_forest_model.pkl contiene un Pipeline con el modelo almacenado en el paso model.
+
+## - 2026-09-02
+
+### Añadido
+
+* Se agregó al archivo `streamlit_app.py` la capacidad de consumir el endpoint `POST /case-importance`, permitiendo mostrar en la interfaz web la importancia de las variables que influyeron en el análisis de un usuario.
+
+### Cambiado
+
+* Se refactorizó la ubicación del archivo `streamlit_app.py`, trasladándolo desde la raíz del proyecto a la carpeta `frontend`, con el objetivo de mejorar la organización de los componentes del proyecto.
+
+* Se modificó la estructura del archivo `Dockerfile` para permitir la ejecución simultánea de la API mediante `main.py` y de la interfaz web mediante `streamlit_app.py`.
+
+### Corregido
+
+* Se eliminó una función importada en la API `main.py` que no estaba siendo utilizada.
+
+* Se eliminó el archivo `test.py` de la carpeta `frontend`, debido a que no aportaba funcionalidad al proyecto.

@@ -142,16 +142,31 @@ docker build -t student-depression-api .
 ## Ejecución del contenedor
 
 ```bash
-docker run -p 8000:8000 student-depression-api
+docker run -p 8000:8000 -p 8501:8501 student-depression-api
 ```
 
-La API quedará disponible en:
+La aplicación se ejecutará de la siguiente manera:
+
+### API FastAPI
 
 ```text
 http://localhost:8000
 ```
 
+### Documentación interactiva de la API (Swagger)
+
+```text
+http://localhost:8000/docs
+```
+
+### Interfaz web Streamlit
+
+```text
+http://localhost:8501
+```
+
 ---
+
 
 ## Documentación Swagger
 

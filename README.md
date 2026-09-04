@@ -4,6 +4,8 @@
 
 > **Asignatura:** Ingeniería DevOps (DOY0101)  
 
+> **Sección:** DOY0101-004D 
+
 > **Institución:** Duoc UC  
 
 > **Integrantes:** Abel Aravena, Benjamín Aravena, Benjamín Tapia
@@ -28,7 +30,7 @@ Para este microservicio hemos elegido **Trunk-Based Development (TBD)** debido a
 
 Adoptamos el estándar **Conventional Commits** para garantizar la trazabilidad del código: 
 
--`feat:` Nuevas funcionalidades o endpoints (ej. `feat: agregar endpoint de predicción`). 
+-`feature:` Nuevas funcionalidades o endpoints (ej. `feature: agregar endpoint de predicción`). 
 
 -`fix:` Corrección de errores o bugs (ej. `fix: corregir tipo de dato en entrada del modelo`). 
 
@@ -40,11 +42,24 @@ Adoptamos el estándar **Conventional Commits** para garantizar la trazabilidad 
 
 -`refactor:` Refactorización de código sin alterar la funcionalidad previa.
 
+En los casos de uso, se preferirá el uso de descripciones **en inglés** para los commits.
+
+### Ramas convencionales
+
+Bajo la estrategia TBD (Trunk-Based Development), se trabajará con ramas temporales que posteriormente serán integradas (merge) al flujo main y eliminadas tras su uso.
+
+Desde la última actualización de este documento (04-09-2026), el equipo ha llegado a un consenso y desde ahora se adopta formalmente la convención `caracteristica/descripcion-corta` para nombrar a estas ramas temporales (ej. `feature/app-web`). Se utilizan únicamente caracteres en minúscula, símbolos '/' y '-'.
+
+### Documentación
+
+Todo cambio referente a cómo se entiende, ejecuta y/o instala el proyecto será debidamente documentado en el archivo `CHANGELOG.md`, indicando la fecha del cambio, el tipo de cambio y una descripción clara.
+
+
 # Student Depression Prediction API
 
 API REST desarrollada con **FastAPI** y **Scikit-Learn** para predecir posibles casos de depresión estudiantil utilizando un modelo de Machine Learning entrenado previamente.
 
-La aplicación se encuentra completamente dockerizada para facilitar su despliegue en cualquier entorno.
+La aplicación se encuentra dockerizada para facilitar su despliegue en cualquier entorno.
 
 ---
 
@@ -71,6 +86,7 @@ La API permite:
 * Scikit-Learn
 * Category Encoders
 * Joblib
+* Streamlit
 * Pytest
 * Docker
 
@@ -89,6 +105,9 @@ ml-student-depression-devops
 │
 ├── Request/
 │   └── StudentRequest.py
+│
+├── frontend/
+│   └── streamlit_app.py
 │
 ├── src/
 │   ├── model_utils.py

@@ -1,4 +1,3 @@
-```yaml
 name: Student Depression CI
 
 on:
@@ -45,4 +44,3 @@ jobs:
           echo "Tests ejecutados correctamente."
           echo "Entorno y dependencias instaladas correctamente."
           echo "=================================================="
-```

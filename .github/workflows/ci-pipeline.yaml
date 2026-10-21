@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - ci/run-testing
+      - ci/aws-deploy
     paths-ignore:
       - "**/*.md"
 
@@ -16,6 +16,7 @@ on:
 
 jobs:
   build:
+    name: Testing
     runs-on: ubuntu-latest
 
     steps:
@@ -42,7 +43,62 @@ jobs:
         run: |
           echo "=================================================="
           echo "Pipeline de CI v1.0 ejecutado exitosamente"
-          echo "Validando integracion en la rama: ${{ github.ref }}"
+          echo "Rama: ${{ github.ref_name }}"
           echo "Tests ejecutados correctamente."
-          echo "Entorno y dependencias instaladas correctamente."
           echo "=================================================="
+
+  deploy:
+    name: Deploy a EC2
+    runs-on: ubuntu-latest
+    needs: build
+
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci/aws-deploy')
+
+    steps:
+      - name: Deploy a EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          BRANCH: ${{ github.ref_name }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          command_timeout: 15m
+          envs: BRANCH
+          script: |
+            set -eu
+
+            echo "Deploy iniciado para la rama: $BRANCH"
+
+            APP_DIR="$HOME/ml-student-depression-devops"
+            REPO_URL="https://github.com/ipynbenja/ml-student-depression-devops.git"
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+
+            git fetch origin "$BRANCH"
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            git reset --hard "origin/$BRANCH"
+
+            echo "Construyendo imagen Docker"
+            sudo docker build -t student-depression-app:latest .
+
+            echo "Deteniendo contenedor anterior, si existe"
+            sudo docker rm -f student-depression-app || true
+
+            echo "Iniciando aplicación"
+            sudo docker run -d \
+              --name student-depression-app \
+              --restart unless-stopped \
+              -p 8000:8000 \
+              -p 8501:8501 \
+              student-depression-app:latest
+
+            echo "Verificando contenedor"
+            sudo docker ps --filter "name=student-depression-app"
+
+            echo "Deploy terminado para la rama: $BRANCH"

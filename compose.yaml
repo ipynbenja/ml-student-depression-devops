@@ -1,0 +1,14 @@
+services:
+  student-depression-app:
+    container_name: student-depression-app
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+
+    restart: unless-stopped
+    init: true

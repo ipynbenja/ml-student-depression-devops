@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - ci/aws-deploy
+      - feature/docker-compose-aws
     paths-ignore:
       - "**/*.md"
 
@@ -39,6 +39,9 @@ jobs:
           PYTHONPATH: .
         run: python -m pytest -v
 
+      - name: Validar configuracion Docker Compose
+        run: docker compose config -q
+
       - name: Imprimir mensaje de verificacion
         run: |
           echo "=================================================="
@@ -52,7 +55,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci/aws-deploy')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/docker-compose-aws')
+
+    concurrency:
+      group: student-depression-ec2-deploy
+      cancel-in-progress: false
 
     steps:
       - name: Deploy a EC2 via SSH
@@ -84,21 +91,23 @@ jobs:
             git checkout -B "$BRANCH" "origin/$BRANCH"
             git reset --hard "origin/$BRANCH"
 
-            echo "Construyendo imagen Docker"
-            sudo docker build -t student-depression-app:latest .
+            echo "Verificando Docker y Docker Compose"
+            sudo docker --version
+            sudo docker compose version
 
-            echo "Deteniendo contenedor anterior, si existe"
-            sudo docker rm -f student-depression-app || true
+            echo "Validando configuracion de Docker Compose"
+            sudo docker compose config -q
 
-            echo "Iniciando aplicación"
-            sudo docker run -d \
-              --name student-depression-app \
-              --restart unless-stopped \
-              -p 8000:8000 \
-              -p 8501:8501 \
-              student-depression-app:latest
+            echo "Deteniendo servicios anteriores y eliminando contenedores huerfanos"
+            sudo docker compose down --remove-orphans --timeout 30 || true
 
-            echo "Verificando contenedor"
-            sudo docker ps --filter "name=student-depression-app"
+            echo "Construyendo e iniciando la aplicacion"
+            sudo docker compose up -d --build --remove-orphans
+
+            echo "Verificando servicios desplegados"
+            sudo docker compose ps
+
+            echo "Ultimos registros de la aplicacion"
+            sudo docker compose logs --tail=50
 
             echo "Deploy terminado para la rama: $BRANCH"

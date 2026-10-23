@@ -64,3 +64,30 @@ Todas las modificaciones notables de este proyecto serán documentadas en este a
 * Se eliminó una función importada en la API `main.py` que no estaba siendo utilizada.
 
 * Se eliminó el archivo `test.py` de la carpeta `frontend`, debido a que no aportaba funcionalidad al proyecto.
+
+
+## - 2026-10-23
+
+### Añadido
+
+- Se añadió el archivo `compose.yaml` para definir y gestionar los servicios de la aplicación mediante Docker Compose.
+
+- Se incorporó la configuración para exponer los puertos `8000` y `8501`, correspondientes a la API FastAPI y a la interfaz web Streamlit, respectivamente.
+
+### Cambiado
+
+- Se actualizó el workflow de GitHub Actions para utilizar Docker Compose durante el despliegue de la aplicación en AWS EC2.
+
+- Se modificó el archivo `.dockerignore` para excluir archivos y carpetas no necesarios o sensibles.
+
+- Se incorporó la validación de la configuración de Docker Compose antes de ejecutar el despliegue.
+
+- Se modificó el proceso de despliegue para detener los servicios anteriores, eliminar contenedores huérfanos y reconstruir e iniciar la aplicación mediante `docker compose up -d --build --remove-orphans`.
+
+- Se añadió la verificación de los servicios desplegados y la visualización de los últimos registros de los contenedores.
+
+- Se incorporó un mecanismo de concurrencia en el job de despliegue para evitar ejecuciones simultáneas sobre la misma instancia EC2.
+
+### Corregido
+
+- Se ajustó el proceso de despliegue para gestionar los servicios de la aplicación mediante Docker Compose, facilitando la actualización y administración de los contenedores en ejecuciones sucesivas del pipeline.

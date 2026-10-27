@@ -34,8 +34,8 @@ jobs:
 
       - name: Instalacion de dependencias
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install --upgrade --only-binary :all: pip
+          python -m pip install --only-binary :all: -r requirements.txt
 
       - name: Ejecutar tests con reporte de cobertura
         env:
@@ -72,8 +72,8 @@ jobs:
 
       - name: Instalacion de dependencias
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install --upgrade --only-binary :all: pip
+          python -m pip install --only-binary :all: -r requirements.txt
 
       - name: Escanear dependencias de Python con Snyk
         uses: snyk/actions/python-3.12@cd4892415d86ef8e13769c84e1cc5f061e38b30f # v0.4.0

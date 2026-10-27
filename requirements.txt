@@ -15,8 +15,9 @@ pydantic==2.11.7
 python-multipart==0.0.20
 openpyxl==3.1.5
 
-# Testing (Compatibles y actualizados)
+# Testing
 pytest>=8.3.4
+pytest-cov>=5.0.0
 httpx>=0.28.1
 
 # Interfaz web

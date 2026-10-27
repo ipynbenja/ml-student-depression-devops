@@ -15,17 +15,17 @@ jobs:
 
     steps:
       - name: Descargar codigo fuente
-        uses: actions/checkout@eef61447b9340f1a14c330df32d3999960dd668b # v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 
 
       - name: Configurar Python 3.12
-        uses: actions/setup-python@0d103c31281d738a5592852fb402f0fc981507d7 # v5.3.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Configurar Cache de Pip
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c62741adb5776c # v4.2.0
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -43,7 +43,7 @@ jobs:
 
       # ANÁLISIS DE CÓDIGO CON SONARCLOUD 
       - name: Escaneo con SonarCloud 
-        uses: SonarSource/sonarqube-scan-action@bfd4e558cda28cda6b5debaf04d5ff72247d28d9 # v4.2.1
+        uses: SonarSource/sonarqube-scan-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -54,15 +54,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Descargar codigo fuente
-        uses: actions/checkout@eef61447b9340f1a14c330df32d3999960dd668b # v4.2.2
+        uses: actions/checkout@v4
 
       - name: Configurar Python 3.12
-        uses: actions/setup-python@0d103c31281d738a5592852fb402f0fc981507d7 # v5.3.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Configurar Cache de Pip
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c62741adb5776c # v4.2.0
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -74,7 +74,7 @@ jobs:
           python -m pip install --only-binary :all: -r requirements.txt
 
       - name: Escanear dependencias de Python con Snyk
-        uses: snyk/actions/python-3.12@cd4892415d86ef8e13769c84e1cc5f061e38b30f # v0.4.0
+        uses: snyk/actions/python-3.12@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -85,7 +85,7 @@ jobs:
         run: docker build -t ml-student-depression:latest .
 
       - name: Escanear Dockerfile con Snyk
-        uses: snyk/actions/docker@cd4892415d86ef8e13769c84e1cc5f061e38b30f # v0.4.0
+        uses: snyk/actions/docker@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -107,7 +107,7 @@ jobs:
 
     steps:
       - name: Deploy a EC2 via SSH
-        uses: appleboy/ssh-action@7eaf76671a0d7e0b681bc10588788330752e55a3 # v1.0.3
+        uses: appleboy/ssh-action@v1.0.3
         env:
           BRANCH: ${{ github.ref_name }}
         with:

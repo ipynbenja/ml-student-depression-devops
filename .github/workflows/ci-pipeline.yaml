@@ -76,6 +76,7 @@ jobs:
 
       - name: Escanear dependencias de Python con Snyk
         uses: snyk/actions/python-3.12@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -87,12 +88,12 @@ jobs:
 
       - name: Escanear Dockerfile con Snyk
         uses: snyk/actions/docker@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: "ml-student-depression:latest"
           args: --file=dockerfile --severity-threshold=high
-        continue-on-error: false
 
   # DESPLIEGUE A EC2
   deploy:

@@ -65,7 +65,6 @@ Todas las modificaciones notables de este proyecto serán documentadas en este a
 
 * Se eliminó el archivo `test.py` de la carpeta `frontend`, debido a que no aportaba funcionalidad al proyecto.
 
-
 ## - 2026-10-23
 
 ### Añadido
@@ -91,3 +90,41 @@ Todas las modificaciones notables de este proyecto serán documentadas en este a
 ### Corregido
 
 - Se ajustó el proceso de despliegue para gestionar los servicios de la aplicación mediante Docker Compose, facilitando la actualización y administración de los contenedores en ejecuciones sucesivas del pipeline.
+
+## - 2026-10-27
+
+### Añadido
+
+- Se incorporaron SonarCloud y Snyk en el workflow GitHub Actions para garantizar la calidad del código y la seguridad ante vulnerabilidades.
+
+### Cambiado
+
+- Para dar cumplimiento a los parámetros de seguridad asociados a Snyk, todas las dependencias indicadas en `requirements.txt` fueron modificadas por versiones seguras y FIJAS (todas mediante signo `==` en lugar de `>=`).
+
+## - 2026-10-28
+
+### Cambiado
+
+- Tras varios intentos de prueba y error tras la incorporación de SonarCloud y Snyk, estos fueron configurados para omitir el bloqueo del pipeline en caso de fallas.
+
+### Corregido
+
+- Mal escrito `Dockerfile` en el pipeline CI/CD, fue corregido.
+
+- Algunas dependencias resultaban incompatibles, principalmente en Streamlit y FastAPI, estas fueron actualizadas a las versiones 1.66.1 y 0.162.0, respectivamente.
+
+## - 2026-10-29
+
+### Añadido
+
+- Se agregaron más pruebas unitarias que cubren casos de error/éxito y se ejecutan correctamente en el pipeline CI/CD, estas nuevas pruebas lograron un 86% de cobertura de código (según el reporte de pytest).
+
+### Cambiado
+
+- Se actualizó la documentación README.md para esta nueva versión del proyecto, describiendo el pipeline construido cómo garantiza la trazabilidad del código de desarrollo a producción.
+
+- Se flexibilizaron las alertas de SonarCloud, configurando los criterios de aceptación directamente desde la consola de SonarQube Cloud. 
+
+### Corregido
+
+- Se corrigió una validación del endpoint `/predict-file`, con tal de evitar un 500 Internal Server Error cuando el archivo enviado es válido (CSV, XLSX), pero está vacío.

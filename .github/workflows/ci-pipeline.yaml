@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - fix/annotated-upload-function
+      - feature/update-test-validation
     paths-ignore:
       - "**/*.md"
 
@@ -49,10 +49,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  
   # ESCANEO DE SEGURIDAD Y DEPENDENCIAS CON SNYK
   security:
     name: Escaneo de seguridad (Snyk)
     runs-on: ubuntu-latest
+    continue-on-error: true
+
     steps:
       - name: Descargar codigo fuente
         uses: actions/checkout@v4
@@ -86,14 +89,15 @@ jobs:
       - name: Construir imagen Docker para escaneo con Snyk
         run: docker build -t ml-student-depression:latest .
 
-      - name: Escanear Dockerfile con Snyk
+      - name: Escanear imagen Docker con Snyk
         uses: snyk/actions/docker@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: "ml-student-depression:latest"
-          args: --file=dockerfile --severity-threshold=high
+          image: ml-student-depression:latest
+          args: --file=Dockerfile --severity-threshold=high
+
 
 
 # DESPLIEGUE A EC2

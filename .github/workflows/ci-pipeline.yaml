@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/update-test-validation
     paths-ignore:
       - "**/*.md"
 

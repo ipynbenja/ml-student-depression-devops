@@ -89,7 +89,7 @@ La API permite:
 * Streamlit
 * Pytest
 * Docker
-
+* Streamlit
 ---
 
 ## Estructura del proyecto
@@ -123,10 +123,12 @@ ml-student-depression-devops
 ├── tests/
 │   └── main_test.py
 │
-├── requirements.txt
-├── Dockerfile
 ├── CHANGELOG.md
-└── README.md
+├── compose.yaml
+├── Dockerfile
+├── README.md
+├── requirements.txt
+└── sonar-project.properties
 ```
 
 ---
@@ -296,21 +298,32 @@ Content-Type: application/json
 ## Dependencias principales
 
 ```text
+# Machine Learning y Datos
 pandas==3.0.3
 numpy==2.4.5
 joblib==1.5.3
 scikit-learn==1.9.0
 category_encoders==2.8.1
+shap==0.48.0
 
-fastapi==0.116.1
+# API y Servidor
+fastapi==0.162.0
 uvicorn[standard]==0.35.0
 pydantic==2.11.7
 
-python-multipart==0.0.20
+# Utilidades y Archivos
+python-multipart==0.0.30
 openpyxl==3.1.5
 
-pytest>=8.3.4
-httpx>=0.28.1
+# Testing
+pytest==8.3.4
+pytest-cov==5.0.0
+httpx==0.28.1
+
+# Interfaz web y Parches
+streamlit==1.66.1
+pillow==13.0.0
+requests==2.32.3
 ```
 
 ---

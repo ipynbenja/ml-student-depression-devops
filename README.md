@@ -367,3 +367,42 @@ Response JSON
 ```
 
 ---
+
+
+## Pipeline de CI/CD y Trazabilidad
+
+Para desplegar automáticamente una aplicación mediante pipelines de CI/CD configurados en un entorno cloud, el proyecto cuenta con un flujo automatizado de Integración Continua y Despliegue Continuo (CI/CD) orquestado mediante **GitHub Actions**.
+
+### Arquitectura del Pipeline (`Student Depression CI/CD`)
+
+El pipeline se encuentra definido en `.github/workflows/ci-pipeline.yaml` y se dispara de forma automática ante cada `push` a la rama `main` (excluyendo modificaciones de documentación en archivos Markdown/de documentación). Consta de tres fases principales organizadas en etapas secuenciales y paralelas:
+
+1. **Pruebas y Calidad (`test`):**
+   - Configura el entorno con **Python 3.12** y optimiza la velocidad mediante caché de dependencias de Pip.
+   - Ejecuta la suite de pruebas unitarias y genera reportes de cobertura usando **Pytest** (`pytest --cov=.`).
+   - Realiza un análisis estático de calidad de código mediante **SonarCloud** para detectar vulnerabilidades, code smells y deuda técnica.
+
+2. **Escaneo de Seguridad y Dependencias (`security`):**
+   - Se ejecuta en paralelo con la etapa de pruebas.
+   - Utiliza **Snyk** para escanear las dependencias de Python en busca de vulnerabilidades conocidas (configurado con un umbral de severidad alto).
+   - Construye la imagen Docker localmente de la aplicación (`ml-student-depression:latest`) y ejecuta un segundo análisis de seguridad de contenedor con Snyk sobre la imagen final para asegurar que no existan riesgos a nivel de sistema operativo o capas base.
+
+3. **Despliegue Continuo Automatizado a AWS EC2 (`deploy`):**
+   - Se ejecuta únicamente si los jobs de `test` y `security` finalizan y el evento proviene de un `push` a la rama `main`.
+   - Utiliza conexiones seguras por SSH (`appleboy/ssh-action`) para conectarse a una instancia en la nube de **AWS EC2**.
+   - Clona o actualiza automáticamente el repositorio en la instancia de destino.
+   - Valida y levanta los servicios utilizando **Docker Compose** (`docker compose up -d --build`).
+   - Ejecuta un mecanismo de verificación de salud (automatizado mediante bucle de peticiones `curl` a la API) para garantizar que el microservicio responde correctamente tras el despliegue. Si la API no responde, realiza un volcado de logs (`docker compose logs`) y detiene el proceso para evitar dejar la aplicación en un estado inconsistente.
+
+---
+
+### Garantía de Trazabilidad (Desarrollo a Producción)
+
+La trazabilidad del sistema se asegura de extremo a extremo mediante los siguientes mecanismos integrados:
+
+| Etapa del Ciclo | Mecanismo de Trazabilidad | Herramienta / Estándar |
+| :--- | :--- | :--- |
+| **Control de Versiones** | Historial limpio y estandarizado de cambios asociados a ramas temporales y commits convencionales. | Git, Trunk-Based Development, Conventional Commits |
+| **Calidad de Código** | Métricas de cobertura de pruebas y análisis estático vinculadas a cada commit y Pull Request. | Pytest, SonarCloud, GitHub Actions |
+| **Seguridad** | Reportes de vulnerabilidades en librerías y contenedores Docker antes del paso a producción. | Snyk Container & Snyk Open Source |
+| **Despliegue Cloud** | Trazabilidad del código fuente ejecutándose en la infraestructura en la nube con control de concurrencia y despliegues idempotentes. | AWS EC2, Docker Compose, SSH Actions |

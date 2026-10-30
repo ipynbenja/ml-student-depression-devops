@@ -20,7 +20,7 @@ API_URL = os.getenv(
 
 
 st.set_page_config(
-    page_title="Predicción de Depresión Estudiantil",
+    page_title="Predicción de Depresión Estudiantil V2",
     page_icon="🧠",
     layout="centered"
 )

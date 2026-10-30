@@ -8,7 +8,7 @@
 
 > **Institución:** Duoc UC  
 
-> **Integrantes:** Abel Aravena, Benjamín Aravena, Benjamín Tapia
+> **Integrantes:** Abel Aravena, Benjamín Aravena
 
 ## Descripción del microservicio
 

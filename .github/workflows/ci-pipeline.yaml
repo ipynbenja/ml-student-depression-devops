@@ -95,7 +95,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: ml-student-depression:latest
-          args: --file=Dockerfile --severity-threshold=high
+          args: --file=dockerfile --severity-threshold=high
 
 
 

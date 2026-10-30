@@ -53,7 +53,7 @@ jobs:
   security:
     name: Escaneo de seguridad (Snyk)
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: false
 
     steps:
       - name: Descargar codigo fuente
@@ -78,7 +78,7 @@ jobs:
 
       - name: Escanear dependencias de Python con Snyk
         uses: snyk/actions/python-3.12@master
-        continue-on-error: true
+        continue-on-error: false
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -90,7 +90,7 @@ jobs:
 
       - name: Escanear imagen Docker con Snyk
         uses: snyk/actions/docker@master
-        continue-on-error: true
+        continue-on-error: false
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:

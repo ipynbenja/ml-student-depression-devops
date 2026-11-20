@@ -29,8 +29,14 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Cliente AWS
-cloudwatch = boto3.client("cloudwatch")
+
+# AWS
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+
+cloudwatch = boto3.client(
+    "cloudwatch",
+    region_name=AWS_REGION
+)
 
 
 @app.get("/")

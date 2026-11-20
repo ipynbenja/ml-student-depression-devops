@@ -9,6 +9,10 @@ import tempfile
 import os
 import io
 import zipfile
+import boto3
+import psutil
+
+from botocore.exceptions import BotoCoreError, ClientError
 
 from src.model_utils import (
     predecir_estudiante, 

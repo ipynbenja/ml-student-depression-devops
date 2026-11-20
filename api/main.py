@@ -1,9 +1,3 @@
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
-
-from typing import Annotated
-from starlette.background import BackgroundTask
-
 import pandas as pd
 import tempfile
 import os
@@ -12,7 +6,15 @@ import zipfile
 import boto3
 import psutil
 
+from datetime import datetime, timezone
+
 from botocore.exceptions import BotoCoreError, ClientError
+
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+
+from typing import Annotated
+from starlette.background import BackgroundTask
 
 from src.model_utils import (
     predecir_estudiante, 

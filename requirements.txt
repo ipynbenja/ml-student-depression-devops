@@ -23,4 +23,8 @@ httpx==0.28.1
 # Interfaz web y Parches
 streamlit==1.66.1
 pillow==13.0.0
-requests==2.32.3
+requests==2.32.3 
+
+# Monitoreo y AWS
+boto3==1.44.7
+psutil==7.2.2

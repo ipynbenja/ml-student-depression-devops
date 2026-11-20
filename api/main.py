@@ -25,6 +25,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Cliente AWS
+cloudwatch = boto3.client("cloudwatch")
+
 
 @app.get("/")
 def root():
@@ -207,3 +210,76 @@ async def predict_file(
 
     finally:
         await file.close()
+
+
+@app.get("/health")
+async def health_check():
+    """
+    Chequea el estado de los distintos servicios
+    asociados al servidor EC2 y el estado del microservicio.
+    """
+    checks = {}
+
+    # 1. FastAPI
+    checks["fastapi"] = {
+        "status": "UP"
+    }
+
+    # 2. CPU
+    try:
+        psutil.cpu_percent(interval=None)
+        checks["cpu"] = {"status": "UP"}
+    except Exception:
+        checks["cpu"] = {"status": "DOWN"}
+
+    # 3. RAM
+    try:
+        psutil.virtual_memory()
+        checks["memory"] = {"status": "UP"}
+    except Exception:
+        checks["memory"] = {"status": "DOWN"}
+
+    # 4. Disco
+    try:
+        psutil.disk_usage("/")
+        checks["disk"] = {"status": "UP"}
+    except Exception:
+        checks["disk"] = {"status": "DOWN"}
+
+    # 5. CloudWatch
+    try:
+        cloudwatch.list_metrics(
+            Namespace="AWS/EC2",
+            MaxRecords=1
+        )
+        checks["cloudwatch"] = {"status": "UP"}
+
+    except (BotoCoreError, ClientError):
+        checks["cloudwatch"] = {"status": "DOWN"}
+
+    # 6. EC2
+    try:
+        ec2_metadata = boto3.client(
+            "ec2",
+            region_name=cloudwatch.meta.region_name
+        )
+        ec2_metadata.describe_instances(
+            MaxResults=5
+        )
+        checks["ec2"] = {"status": "UP"}
+
+    except (BotoCoreError, ClientError):
+        checks["ec2"] = {"status": "DOWN"}
+
+    # Estado general
+    available = all(
+        component["status"] == "UP"
+        for component in checks.values()
+    )
+
+    return {
+        "status": "UP" if available else "DEGRADED",
+        "availability": available,
+        "checks": checks,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }

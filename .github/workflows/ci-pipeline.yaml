@@ -1,4 +1,3 @@
-
 name: Student Depression CI/CD
 
 on:
@@ -7,7 +6,7 @@ on:
       - main
       - feature/health-endopoint
     paths-ignore:
-      - '**/*.md'
+      - "**/*.md"
 
 jobs:
 
@@ -43,7 +42,25 @@ jobs:
         continue-on-error: true
         env:
           PYTHONPATH: .
-        run: python -m pytest --cov=. --cov-report=xml -v
+        run: |
+          python -m pytest \
+            --cov=api \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov \
+            -v
+
+      # PUBLICAR REPORTES DE COBERTURA
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-coverage-report
+          path: |
+            coverage.xml
+            htmlcov/
+          retention-days: 7
+          if-no-files-found: warn
 
       # ANALISIS DE CODIGO CON SONARCLOUD
       - name: Escaneo con SonarCloud

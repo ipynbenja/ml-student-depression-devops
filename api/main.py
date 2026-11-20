@@ -258,18 +258,7 @@ async def health_check():
     except Exception:
         checks["disk"] = {"status": "DOWN"}
 
-    # 5. CloudWatch
-    try:
-        cloudwatch.list_metrics(
-            Namespace="AWS/EC2",
-            MaxRecords=1
-        )
-        checks["cloudwatch"] = {"status": "UP"}
-
-    except (BotoCoreError, ClientError):
-        checks["cloudwatch"] = {"status": "DOWN"}
-
-    # 6. EC2
+    # 5. EC2
     try:
         ec2_metadata = boto3.client(
             "ec2",

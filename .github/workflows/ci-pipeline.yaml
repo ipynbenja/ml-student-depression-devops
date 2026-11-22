@@ -8,6 +8,12 @@ on:
     paths-ignore:
       - "**/*.md"
 
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+
 jobs:
 
   # PRUEBAS UNITARIAS Y COBERTURA

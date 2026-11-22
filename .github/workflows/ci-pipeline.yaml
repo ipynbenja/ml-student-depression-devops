@@ -205,6 +205,7 @@ jobs:
           envs: BRANCH
           script: |
             set -eu
+            START_TIME=$(date +%s)
 
             echo "Deploy iniciado para la rama: $BRANCH"
 
@@ -257,4 +258,25 @@ jobs:
             echo "Ultimos registros de la aplicacion"
             sudo docker compose logs --tail=50
 
+            echo "Verificando servicios desplegados"
+            sudo docker compose ps
+
+            echo "Ultimos registros de la aplicacion"
+            sudo docker compose logs --tail=50
+
+            END_TIME=$(date +%s)
+            DEPLOYMENT_DURATION=$((END_TIME - START_TIME))
+
+            echo "Tiempo total de despliegue: ${DEPLOYMENT_DURATION} segundos"
+
+            echo "Publicando tiempo de despliegue en CloudWatch"
+
+            aws cloudwatch put-metric-data \
+              --namespace "StudentDepression/CI-CD" \
+              --metric-name "DeploymentDuration" \
+              --value "$DEPLOYMENT_DURATION" \
+              --unit Seconds \
+              --region us-east-1
+
+            echo "Tiempo de despliegue publicado correctamente"
             echo "Deploy terminado para la rama: $BRANCH"

@@ -1,10 +1,11 @@
+
 name: Student Depression CI/CD
 
 on:
   push:
     branches:
       - main
-      - feature/health-endopoint
+      - feature/put-metric-data
     paths-ignore:
       - "**/*.md"
 
@@ -61,6 +62,67 @@ jobs:
             htmlcov/
           retention-days: 7
           if-no-files-found: warn
+
+      # EXTRAER PORCENTAJE DE COBERTURA
+      - name: Obtener porcentaje de cobertura
+        id: coverage
+        if: always()
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          import os
+          from pathlib import Path
+
+          coverage_file = Path("coverage.xml")
+
+          if not coverage_file.exists():
+              print("AVISO: coverage.xml no fue generado.")
+              with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+                  output.write("value=\n")
+              exit(0)
+
+          root = ET.parse(coverage_file).getroot()
+          line_rate = root.attrib.get("line-rate")
+
+          if line_rate is None:
+              raise ValueError("No se encontro line-rate en coverage.xml")
+
+          coverage = float(line_rate) * 100
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"value={coverage:.2f}\n")
+
+          print(f"Cobertura obtenida: {coverage:.2f}%")
+          PY
+
+      # PUBLICAR COBERTURA EN CLOUDWATCH
+      - name: Enviar cobertura a CloudWatch
+        if: always() && steps.coverage.outputs.value != ''
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          COVERAGE: ${{ steps.coverage.outputs.value }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          command_timeout: 2m
+          envs: COVERAGE
+          script: |
+            set -eu
+
+            echo "Publicando cobertura: ${COVERAGE}%"
+
+            aws cloudwatch put-metric-data \
+              --namespace "StudentDepression/CI-CD" \
+              --metric-name "TestCoverage" \
+              --value "$COVERAGE" \
+              --unit Percent \
+              --region us-east-1
+
+            echo "Cobertura publicada correctamente"
 
       # ANALISIS DE CODIGO CON SONARCLOUD
       - name: Escaneo con SonarCloud

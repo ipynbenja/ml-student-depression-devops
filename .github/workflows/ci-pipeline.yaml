@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - feature/put-metric-data
     paths-ignore:
       - "**/*.md"
 
@@ -40,7 +39,6 @@ jobs:
           python -m pip install --only-binary :all: -r requirements.txt
 
       - name: Ejecutar tests con reporte de cobertura
-        continue-on-error: true
         env:
           PYTHONPATH: .
         run: |
@@ -67,7 +65,7 @@ jobs:
       - name: Obtener porcentaje de cobertura
         id: coverage
         if: always()
-        continue-on-error: true
+        continue-on-error: ${{ vars.ALLOW_NONCRITICAL_FAILURES == 'true' }}
         run: |
           python - <<'PY'
           import xml.etree.ElementTree as ET
@@ -99,7 +97,7 @@ jobs:
       # PUBLICAR COBERTURA EN CLOUDWATCH
       - name: Enviar cobertura a CloudWatch
         if: always() && steps.coverage.outputs.value != ''
-        continue-on-error: true
+        continue-on-error:  ${{ vars.ALLOW_NONCRITICAL_FAILURES == 'true' }}
         uses: appleboy/ssh-action@v1.0.3
         env:
           COVERAGE: ${{ steps.coverage.outputs.value }}
@@ -127,7 +125,7 @@ jobs:
       # ANALISIS DE CODIGO CON SONARCLOUD
       - name: Escaneo con SonarCloud
         uses: SonarSource/sonarqube-scan-action@v4
-        continue-on-error: true
+        continue-on-error: ${{ vars.ALLOW_NONCRITICAL_FAILURES == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -158,9 +156,17 @@ jobs:
         run: |
           python -m pip install --only-binary :all: -r requirements.txt
 
-      - name: Escanear dependencias de Python con Snyk
+      - name: Snyk Python - Bloquear vulnerabilidades críticas
         uses: snyk/actions/python-3.12@master
-        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --severity-threshold=critical
+
+      - name: Snyk Python - Evaluar vulnerabilidades altas
+        uses: snyk/actions/python-3.12@master
+        continue-on-error: ${{ vars.ALLOW_NONCRITICAL_FAILURES == 'true' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -170,9 +176,17 @@ jobs:
       - name: Construir imagen Docker para escaneo con Snyk
         run: docker build -t ml-student-depression:latest .
 
-      - name: Escanear imagen Docker con Snyk
+      - name: Snyk Docker - Bloquear vulnerabilidades críticas
         uses: snyk/actions/docker@master
-        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ml-student-depression:latest
+          args: --file=Dockerfile --severity-threshold=critical
+
+      - name: Snyk Docker - Evaluar vulnerabilidades altas
+        uses: snyk/actions/docker@master
+        continue-on-error: ${{ vars.ALLOW_NONCRITICAL_FAILURES == 'true' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -185,7 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, security]
 
-    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/health-endopoint') }}
+    if: ${{ success() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
     concurrency:
       group: student-depression-ec2-deploy
@@ -230,7 +244,7 @@ jobs:
             sudo docker compose config -q
 
             echo "Deteniendo servicios anteriores y eliminando contenedores huerfanos"
-            sudo docker compose down --remove-orphans --timeout 30 || true
+            sudo docker compose down --remove-orphans --timeout 30
 
             echo "Construyendo e iniciando la aplicacion"
             sudo docker compose up -d --build --remove-orphans
@@ -251,12 +265,6 @@ jobs:
 
               sleep 5
             done
-
-            echo "Verificando servicios desplegados"
-            sudo docker compose ps
-
-            echo "Ultimos registros de la aplicacion"
-            sudo docker compose logs --tail=50
 
             echo "Verificando servicios desplegados"
             sudo docker compose ps

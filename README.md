@@ -369,40 +369,154 @@ Response JSON
 ---
 
 
-## Pipeline de CI/CD y Trazabilidad
 
-Para desplegar automáticamente una aplicación mediante pipelines de CI/CD configurados en un entorno cloud, el proyecto cuenta con un flujo automatizado de Integración Continua y Despliegue Continuo (CI/CD) orquestado mediante **GitHub Actions**.
+## Pipeline de CI/CD, Monitoreo y Trazabilidad
+
+Para automatizar la integración, validación y despliegue de la aplicación, el proyecto cuenta con un flujo de Integración Continua y Despliegue Continuo (CI/CD) orquestado mediante **GitHub Actions**. Este flujo integra herramientas de calidad de código, análisis de seguridad y monitoreo de infraestructura, permitiendo validar los cambios antes de su publicación y observar el comportamiento de la aplicación en producción.
 
 ### Arquitectura del Pipeline (`Student Depression CI/CD`)
 
-El pipeline se encuentra definido en `.github/workflows/ci-pipeline.yaml` y se dispara de forma automática ante cada `push` a la rama `main` (excluyendo modificaciones de documentación en archivos Markdown/de documentación). Consta de tres fases principales organizadas en etapas secuenciales y paralelas:
+El pipeline se encuentra definido en `.github/workflows/ci-pipeline.yaml` y se ejecuta automáticamente ante los eventos configurados para el repositorio. Consta de tres etapas principales:
 
-1. **Pruebas y Calidad (`test`):**
-   - Configura el entorno con **Python 3.12** y optimiza la velocidad mediante caché de dependencias de Pip.
-   - Ejecuta la suite de pruebas unitarias y genera reportes de cobertura usando **Pytest** (`pytest --cov=.`).
-   - Realiza un análisis estático de calidad de código mediante **SonarCloud** para detectar vulnerabilidades, code smells y deuda técnica.
+**1. Pruebas y Calidad (`test`):**
 
-2. **Escaneo de Seguridad y Dependencias (`security`):**
-   - Se ejecuta en paralelo con la etapa de pruebas.
-   - Utiliza **Snyk** para escanear las dependencias de Python en busca de vulnerabilidades conocidas (configurado con un umbral de severidad alto).
-   - Construye la imagen Docker localmente de la aplicación (`ml-student-depression:latest`) y ejecuta un segundo análisis de seguridad de contenedor con Snyk sobre la imagen final para asegurar que no existan riesgos a nivel de sistema operativo o capas base.
+- Configura el entorno de ejecución utilizando **Python 3.12** y optimiza la instalación de dependencias mediante caché de Pip.
+- Ejecuta pruebas automatizadas con **Pytest**, generando reportes de cobertura mediante `pytest-cov` en formatos XML, HTML y consola.
+- Publica la métrica de cobertura de pruebas (`TestCoverage`) en **AWS CloudWatch**, permitiendo realizar seguimiento de la evolución de la calidad del código.
+- Ejecuta un análisis estático mediante **SonarCloud**, identificando problemas de calidad, vulnerabilidades, malas prácticas y/o deuda técnica.
+- La ejecución de las validaciones críticas permite impedir que los cambios continúen hacia el despliegue cuando se detectan fallas.
 
-3. **Despliegue Continuo Automatizado a AWS EC2 (`deploy`):**
-   - Se ejecuta únicamente si los jobs de `test` y `security` finalizan y el evento proviene de un `push` a la rama `main`.
-   - Utiliza conexiones seguras por SSH (`appleboy/ssh-action`) para conectarse a una instancia en la nube de **AWS EC2**.
-   - Clona o actualiza automáticamente el repositorio en la instancia de destino.
-   - Valida y levanta los servicios utilizando **Docker Compose** (`docker compose up -d --build`).
-   - Ejecuta un mecanismo de verificación de salud (automatizado mediante bucle de peticiones `curl` a la API) para garantizar que el microservicio responde correctamente tras el despliegue. Si la API no responde, realiza un volcado de logs (`docker compose logs`) y detiene el proceso para evitar dejar la aplicación en un estado inconsistente.
+**2. Escaneo de Seguridad y Dependencias (`security`):**
+
+- Se ejecuta en paralelo con la etapa de pruebas.
+- Utiliza **Snyk Open Source** para analizar las dependencias de Python e identificar vulnerabilidades conocidas.
+- Aplica umbrales de severidad diferenciados para vulnerabilidades críticas y altas, permitiendo establecer distintos niveles de exigencia para la continuidad del pipeline.
+- Construye la imagen Docker de la aplicación y ejecuta un análisis mediante **Snyk Container**, identificando vulnerabilidades presentes en la imagen y sus dependencias del sistema.
+- Los hallazgos críticos interrumpen el flujo de ejecución, mientras que los controles no críticos pueden flexibilizarse mediante la variable de repositorio `ALLOW_NONCRITICAL_FAILURES`.
+
+**3. Despliegue Continuo Automatizado a AWS EC2 (`deploy`):**
+
+- Se ejecuta únicamente cuando los jobs de pruebas y seguridad finalizan correctamente y el evento corresponde a un `push` a la rama `main`.
+- Utiliza conexiones seguras mediante SSH (`appleboy/ssh-action`) para conectarse a una instancia de **AWS EC2**.
+- Actualiza el código fuente del repositorio en la instancia de destino.
+- Valida la configuración y levanta los servicios utilizando **Docker Compose**.
+- Ejecuta una verificación automatizada de salud mediante peticiones `curl` al endpoint principal de la API (`GET /`).
+- Si la API no responde dentro del período de verificación, se recopilan los registros del contenedor y se interrumpe el proceso para detectar el problema, evitando considerar exitoso un despliegue que no se encuentra operativo.
+- Publica la duración del despliegue (`DeploymentDuration`) en AWS CloudWatch para mantener un registro de los tiempos de despliegue.
+
+---
+
+### Monitoreo y Observabilidad con AWS CloudWatch
+
+Para supervisar el comportamiento de la aplicación desplegada, se utiliza **AWS CloudWatch** como plataforma centralizada de monitoreo. La integración contempla métricas de infraestructura, registros de ejecución y métricas personalizadas generadas durante el pipeline CI/CD.
+
+**1. Monitoreo de infraestructura mediante CloudWatch Agent**
+
+Se instaló y configuró **Amazon CloudWatch Agent** en la instancia EC2 para recopilar métricas del servidor en intervalos de 60 segundos, permitiendo observar:
+
+- **CPU:** utilización del procesador (esta métrica ya está disponible por defecto).
+- **Memoria:** porcentaje de memoria utilizada.
+- **Disco:** utilización del espacio disponible en los sistemas de archivos configurados.
+
+Estas métricas permiten identificar posibles cuellos de botella y evaluar si los recursos asignados a la instancia son suficientes para mantener la aplicación operativa.
+
+**2. Centralización de registros de la aplicación**
+
+Se configuró CloudWatch Agent para recopilar los registros generados por Docker mediante sus archivos de log en formato JSON.
+
+Los registros se envían al siguiente grupo de CloudWatch Logs:
+
+`/student-depression/ec2/application`
+
+La centralización permite consultar los registros HTTP generados por la aplicación, revisar respuestas y errores de ejecución y disponer de información para investigar comportamientos anómalos sin depender exclusivamente del acceso directo a la instancia EC2.
+
+**3. Métricas personalizadas del pipeline CI/CD**
+
+Además de las métricas de infraestructura, se implementaron métricas personalizadas en CloudWatch mediante AWS CLI y la integración con la instancia EC2.
+
+| Métrica | Descripción | Utilidad |
+| :--- | :--- | :--- |
+| `TestCoverage` | Porcentaje de cobertura obtenido mediante Pytest. | Evaluar la evolución de la cobertura de pruebas y detectar posibles retrocesos en la validación del código. |
+| `DeploymentDuration` | Tiempo requerido para completar el despliegue. | Identificar variaciones en los tiempos de publicación y posibles problemas en el proceso de despliegue. |
+| `HealthCheckAvailability` | Disponibilidad registrada mediante verificaciones de salud de la aplicación. | Observar si la API responde correctamente y detectar interrupciones del servicio. |
+
+**4. Dashboard de monitoreo**
+
+Las métricas recopiladas se organizan en un dashboard personalizado de CloudWatch denominado `Dashboard_Servidor_DevOps`.
+
+Este dashboard permite visualizar en un mismo espacio las métricas de infraestructura y los indicadores asociados al pipeline CI/CD, facilitando el seguimiento del estado general del servidor y del proceso de despliegue.
+
+La combinación de métricas y registros permite complementar la información cuantitativa con evidencia de ejecución, facilitando la investigación de incidentes y la identificación de tendencias.
+
+---
+
+### Seguridad y Políticas de Cumplimiento
+
+La seguridad del proyecto se aborda mediante controles automatizados durante la integración continua y restricciones sobre la administración del repositorio.
+
+**1. Análisis automatizado de calidad y vulnerabilidades**
+
+- **SonarCloud:** analiza estáticamente el código fuente para identificar problemas de calidad, vulnerabilidades y deuda técnica.
+- **Snyk Open Source:** examina las dependencias del proyecto en busca de vulnerabilidades conocidas.
+- **Snyk Container:** analiza la imagen Docker construida durante el pipeline para detectar riesgos en sus componentes y capas base.
+
+Los análisis se ejecutan antes del despliegue, permitiendo detectar problemas de seguridad y calidad antes de que lleguen al entorno productivo.
+
+**2. Control de acceso y protección de la rama principal**
+
+Se establecen mecanismos de control sobre el repositorio para resguardar la integridad del código y la configuración del pipeline:
+
+- Administración restringida de los permisos del repositorio, limitando quién puede modificar configuraciones críticas.
+- Uso de reglas de protección de la rama `main` para establecer condiciones de integración y evitar modificaciones que no cumplan las políticas definidas.
+
+Estos mecanismos buscan evitar que cambios no validados o modificaciones no autorizadas debiliten los controles de calidad y seguridad.
+
+**3. Interrupción del pipeline ante fallas**
+
+El pipeline utiliza condiciones de ejecución y dependencias entre jobs para impedir que un despliegue continúe cuando fallan validaciones críticas.
+
+Entre los controles implementados se encuentran:
+
+- Fallas en las pruebas automatizadas.
+- Vulnerabilidades críticas detectadas por Snyk.
+- Fallas en la construcción de la imagen Docker.
+- Errores durante el despliegue o en la verificación de salud de la API.
+
+La variable `ALLOW_NONCRITICAL_FAILURES` permite flexibilizar determinados controles, como el análisis de vulnerabilidades altas y SonarCloud. 
+
+---
+
+### Impacto en la Toma de Decisiones y Mejora Continua
+
+La integración de herramientas de monitoreo, métricas y seguridad permite transformar los resultados de ejecución del pipeline y el comportamiento de la infraestructura en información útil para la toma de decisiones.
+
+| Información recopilada | Decisión que permite fundamentar | Impacto en la mejora continua |
+| :--- | :--- | :--- |
+| Cobertura de pruebas (`TestCoverage`) | Identificar componentes con baja cobertura y priorizar la creación de pruebas adicionales. | Mejorar progresivamente la capacidad de detección de errores. |
+| Análisis de SonarCloud | Priorizar correcciones de calidad, vulnerabilidades y deuda técnica. | Mantener un código más mantenible y confiable. |
+| Reportes de Snyk | Determinar qué dependencias o componentes requieren actualización o corrección prioritaria. | Reducir la exposición a vulnerabilidades conocidas. |
+| CPU, memoria y disco | Evaluar si la infraestructura dispone de recursos suficientes. | Anticipar problemas de capacidad y optimizar los recursos utilizados. |
+| Registros de CloudWatch Logs | Investigar errores y comportamientos anómalos a partir de los registros de ejecución. | Facilitar el diagnóstico y reducir el tiempo de identificación de incidentes. |
+| Duración del despliegue (`DeploymentDuration`) | Detectar aumentos en el tiempo requerido para publicar nuevas versiones. | Identificar oportunidades de optimización del pipeline. |
+| Disponibilidad (`HealthCheckAvailability`) | Evaluar la continuidad del servicio y detectar interrupciones. | Mejorar la estabilidad y confiabilidad de la aplicación. |
+
+En conjunto, estas herramientas permiten establecer un ciclo de retroalimentación continua: las pruebas y los análisis de seguridad validan los cambios antes de su publicación, mientras que CloudWatch permite observar el comportamiento de la aplicación y la infraestructura después del despliegue.
+
+De esta manera, las decisiones de mantenimiento, corrección, optimización y evolución del sistema se fundamentan en resultados medibles y registros de ejecución, en lugar de depender exclusivamente de observaciones manuales.
 
 ---
 
 ### Garantía de Trazabilidad (Desarrollo a Producción)
 
-La trazabilidad del sistema se asegura de extremo a extremo mediante los siguientes mecanismos integrados:
+La trazabilidad del sistema se asegura mediante mecanismos integrados durante las distintas etapas del ciclo DevOps:
 
-| Etapa del Ciclo | Mecanismo de Trazabilidad | Herramienta / Estándar |
+| Etapa del ciclo | Mecanismo de trazabilidad | Herramienta / Estándar |
 | :--- | :--- | :--- |
-| **Control de Versiones** | Historial limpio y estandarizado de cambios asociados a ramas temporales y commits convencionales. | Git, Trunk-Based Development, Conventional Commits |
-| **Calidad de Código** | Métricas de cobertura de pruebas y análisis estático vinculadas a cada commit y Pull Request. | Pytest, SonarCloud, GitHub Actions |
-| **Seguridad** | Reportes de vulnerabilidades en librerías y contenedores Docker antes del paso a producción. | Snyk Container & Snyk Open Source |
-| **Despliegue Cloud** | Trazabilidad del código fuente ejecutándose en la infraestructura en la nube con control de concurrencia y despliegues idempotentes. | AWS EC2, Docker Compose, SSH Actions |
+| Control de versiones | Historial de cambios asociado a ramas temporales y commits convencionales. | Git, Trunk-Based Development, Conventional Commits |
+| Calidad de código | Reportes de pruebas, cobertura y análisis estático. | Pytest, SonarCloud, GitHub Actions |
+| Seguridad | Resultados de análisis de vulnerabilidades en dependencias e imágenes Docker. | Snyk Open Source, Snyk Container |
+| Despliegue cloud | Registro de la ejecución del despliegue y verificación de salud posterior. | AWS EC2, Docker Compose, SSH Actions |
+| Monitoreo | Registro de métricas de infraestructura, métricas personalizadas y logs de aplicación. | AWS CloudWatch, CloudWatch Agent |
+| Cumplimiento | Restricción de permisos administrativos y políticas de protección de la rama principal. | GitHub Repository Settings, Branch Protection Rules |
+
+Esta integración permite mantener una relación entre los cambios realizados en el código, las validaciones ejecutadas, los resultados de seguridad y el comportamiento de la aplicación desplegada.

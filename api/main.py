@@ -1,14 +1,20 @@
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
-
-from typing import Annotated
-from starlette.background import BackgroundTask
-
 import pandas as pd
 import tempfile
 import os
 import io
 import zipfile
+import boto3
+import psutil
+
+from datetime import datetime, timezone
+
+from botocore.exceptions import BotoCoreError, ClientError
+
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+
+from typing import Annotated
+from starlette.background import BackgroundTask
 
 from src.model_utils import (
     predecir_estudiante, 
@@ -23,6 +29,15 @@ app = FastAPI(
     title="Student Depression Prediction API",
     description="API para predicción de depresión estudiantil utilizando Random Forest",
     version="1.0.0"
+)
+
+
+# AWS
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+
+cloudwatch = boto3.client(
+    "cloudwatch",
+    region_name=AWS_REGION
 )
 
 
@@ -207,3 +222,65 @@ async def predict_file(
 
     finally:
         await file.close()
+
+
+@app.get("/health")
+async def health_check():
+    """
+    Chequea el estado de los distintos servicios
+    asociados al servidor EC2 y el estado del microservicio.
+    """
+    checks = {}
+
+    # 1. FastAPI
+    checks["fastapi"] = {
+        "status": "UP"
+    }
+
+    # 2. CPU
+    try:
+        psutil.cpu_percent(interval=None)
+        checks["cpu"] = {"status": "UP"}
+    except Exception:
+        checks["cpu"] = {"status": "DOWN"}
+
+    # 3. RAM
+    try:
+        psutil.virtual_memory()
+        checks["memory"] = {"status": "UP"}
+    except Exception:
+        checks["memory"] = {"status": "DOWN"}
+
+    # 4. Disco
+    try:
+        psutil.disk_usage("/")
+        checks["disk"] = {"status": "UP"}
+    except Exception:
+        checks["disk"] = {"status": "DOWN"}
+
+    # 5. EC2
+    try:
+        ec2_metadata = boto3.client(
+            "ec2",
+            region_name=cloudwatch.meta.region_name
+        )
+        ec2_metadata.describe_instances(
+            MaxResults=5
+        )
+        checks["ec2"] = {"status": "UP"}
+
+    except (BotoCoreError, ClientError):
+        checks["ec2"] = {"status": "DOWN"}
+
+    # Estado general
+    available = all(
+        component["status"] == "UP"
+        for component in checks.values()
+    )
+
+    return {
+        "status": "UP" if available else "DEGRADED",
+        "availability": available,
+        "checks": checks,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }

@@ -1,6 +1,8 @@
-
 import io
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+
+from datetime import datetime
+from botocore.exceptions import ClientError
 
 import pandas as pd
 import pytest
@@ -191,3 +193,179 @@ def test_predict_file_empty_csv(mock_predecir_df):
     #Verificamos que responda limpiamente con el JSON de error
     assert response.status_code == 400
     assert response.json() == {"detail": "El archivo está vacío."}
+
+
+
+#5. PRUEBAS DEL HEALTH CHECK (/health)
+
+def test_health_all_services_up(monkeypatch):
+    """Verifica que todos los servicios estén disponibles."""
+
+    # Simulamos las respuestas de psutil
+    monkeypatch.setattr(
+        "api.main.psutil.cpu_percent",
+        lambda interval=None: 15.0
+    )
+
+    monkeypatch.setattr(
+        "api.main.psutil.virtual_memory",
+        lambda: MagicMock(percent=45.0)
+    )
+
+    monkeypatch.setattr(
+        "api.main.psutil.disk_usage",
+        lambda path: MagicMock(percent=50.0)
+    )
+
+    # Simulamos el cliente de AWS EC2
+    mock_ec2 = MagicMock()
+    mock_ec2.describe_instances.return_value = {}
+
+    monkeypatch.setattr(
+        "api.main.cloudwatch",
+        MagicMock(meta=MagicMock(region_name="us-east-1"))
+    )
+
+    monkeypatch.setattr(
+        "api.main.boto3.client",
+        MagicMock(return_value=mock_ec2)
+    )
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "UP"
+    assert data["availability"] is True
+
+    assert data["checks"] == {
+        "fastapi": {"status": "UP"},
+        "cpu": {"status": "UP"},
+        "memory": {"status": "UP"},
+        "disk": {"status": "UP"},
+        "ec2": {"status": "UP"},
+    }
+
+    mock_ec2.describe_instances.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "metodo",
+    [
+        "cpu_percent",
+        "virtual_memory",
+        "disk_usage",
+    ],
+)
+def test_health_system_resource_failure(monkeypatch, metodo):
+    """Verifica que un fallo en los recursos del sistema genere DEGRADED."""
+
+    # Simulamos un error en el recurso correspondiente
+    monkeypatch.setattr(
+        f"api.main.psutil.{metodo}",
+        MagicMock(side_effect=OSError("Error al consultar recurso"))
+    )
+
+    # Simulamos el funcionamiento de EC2
+    mock_ec2 = MagicMock()
+    mock_ec2.describe_instances.return_value = {}
+
+    monkeypatch.setattr(
+        "api.main.cloudwatch",
+        MagicMock(meta=MagicMock(region_name="us-east-1"))
+    )
+
+    monkeypatch.setattr(
+        "api.main.boto3.client",
+        MagicMock(return_value=mock_ec2)
+    )
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "DEGRADED"
+    assert data["availability"] is False
+
+    # Identificar el componente afectado
+    componente = {
+        "cpu_percent": "cpu",
+        "virtual_memory": "memory",
+        "disk_usage": "disk",
+    }[metodo]
+
+    assert data["checks"][componente]["status"] == "DOWN"
+
+
+def test_health_ec2_failure(monkeypatch):
+    """Verifica que un error de conexión o permisos en EC2 genere DEGRADED."""
+
+    # Simulamos los recursos del sistema funcionando
+    monkeypatch.setattr(
+        "api.main.psutil.cpu_percent",
+        lambda interval=None: 15.0
+    )
+
+    monkeypatch.setattr(
+        "api.main.psutil.virtual_memory",
+        lambda: MagicMock(percent=45.0)
+    )
+
+    monkeypatch.setattr(
+        "api.main.psutil.disk_usage",
+        lambda path: MagicMock(percent=50.0)
+    )
+
+    # Simulamos un error de permisos IAM
+    mock_ec2 = MagicMock()
+
+    mock_ec2.describe_instances.side_effect = ClientError(
+        {
+            "Error": {
+                "Code": "AccessDenied",
+                "Message": "Permisos insuficientes"
+            }
+        },
+        "DescribeInstances"
+    )
+
+    monkeypatch.setattr(
+        "api.main.cloudwatch",
+        MagicMock(meta=MagicMock(region_name="us-east-1"))
+    )
+
+    monkeypatch.setattr(
+        "api.main.boto3.client",
+        MagicMock(return_value=mock_ec2)
+    )
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "DEGRADED"
+    assert data["availability"] is False
+    assert data["checks"]["ec2"]["status"] == "DOWN"
+
+
+def test_health_timestamp():
+    """Verifica que el endpoint entregue una fecha y hora válida."""
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "timestamp" in data
+
+    # Comprobar que el timestamp tenga formato ISO 8601
+    timestamp = datetime.fromisoformat(data["timestamp"])
+
+    assert timestamp.tzinfo is not None

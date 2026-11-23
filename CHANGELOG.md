@@ -128,3 +128,30 @@ Todas las modificaciones notables de este proyecto serán documentadas en este a
 ### Corregido
 
 - Se corrigió una validación del endpoint `/predict-file`, con tal de evitar un 500 Internal Server Error cuando el archivo enviado es válido (CSV, XLSX), pero está vacío.
+
+## - 2026-11-20
+
+### Añadido
+- Se incorporó el endpoint `health/` para verificar el estado del servidor y del microservicio.
+- Se agregaron las dependencias **Boto3** y **Psutil** para la recolección y consulta de métricas del servidor.
+
+### Corregido
+- Se corrigieron referencias e importaciones inválidas requeridas para el funcionamiento del endpoint `health/` en `api/main.py`.
+
+## - 2026-11-22
+
+### Añadido
+
+- Se incorporó la recopilación de registros de los contenedores Docker mediante CloudWatch Agent, permitiendo centralizar los logs de la aplicación en Amazon CloudWatch Logs.
+
+- Se añadieron métricas personalizadas de monitoreo del pipeline CI/CD en CloudWatch, incluyendo cobertura de pruebas, duración del despliegue y disponibilidad de la aplicación.
+
+- Se incorporaron reglas de protección para la rama `main`, junto con restricciones de acceso a la administración del repositorio y sus variables de configuración.
+
+### Cambiado
+
+- Se actualizó la configuración del agente CloudWatch para recopilar métricas de infraestructura y registros de la aplicación desde la instancia EC2.
+
+- Se modificó el pipeline CI/CD para diferenciar las validaciones de seguridad críticas y de alta severidad mediante Snyk, incorporando un mecanismo de control para permitir o bloquear fallas no críticas.
+
+- Se ajustó el manejo de errores en las etapas de pruebas, seguridad y despliegue para impedir la publicación de versiones cuando se producen fallas críticas.

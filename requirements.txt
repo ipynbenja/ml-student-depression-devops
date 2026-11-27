@@ -1,8 +1,8 @@
 # Machine Learning y Datos
-pandas==3.0.3
-numpy==2.4.5
-joblib==1.5.3
-scikit-learn==1.9.0
+pandas>=3.0.3
+numpy>=2.4.5
+joblib>=1.5.3
+scikit-learn>=1.9.0
 category_encoders==2.8.1
 shap==0.48.0
 
